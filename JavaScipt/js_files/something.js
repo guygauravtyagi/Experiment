@@ -164,7 +164,7 @@ var collisionChecker = function () {
     });
 };
 
-function rectCircleColliding(circle,rect){
+var rectCircleColliding = function (circle,rect){
     var distX = Math.abs(circle.x - rect.x-rect.width/2);
     var distY = Math.abs(circle.y - rect.y-rect.height/2);
 
@@ -184,7 +184,7 @@ var continuousCall = function () {
         obstaclePiece = new obstacles(30, 30, 10, 'blue', 670, generateRandomNumbers(500), -generateRandomNumbers(5), 0);
         obstclesArray.push(obstaclePiece);
         continuousCall();
-    }, generateRandomNumbers(2000));
+    }, generateRandomNumbers(5000));
 };
 
 var updateObstacles = function () {
