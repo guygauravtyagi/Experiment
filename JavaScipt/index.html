@@ -1,27 +1,75 @@
 <!doctype>
 <html>
 
-    <head>
+<head>
 
-    </head>
-    <style>
-        #canvas {
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+</head>
+<style>
+    section {
+        float: left;
+        width: 63.197026%;
+    }
 
-    <body onkeypress="callMe();">
-        <div>
-            <canvas id="myCanvas" style="border:1px solid #d3d3d3;">
+    aside {
+        float: right;
+        width: 29.3680297%;
+    }
 
-            </canvas>
-        </div>
-        <div>
-            <h4><b>Score : </b> <span id="score">0</span></h4>
-            <h4><b>LIVES LEFT : </b> <span id="life">3</span></h4>
-        </div>
-        <script src="js_files/something.js"></script>
-    </body>
+    table,
+    th,
+    td {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 5px;
+        text-align: left;
+    }
+</style>
+
+<body>
+    <div>
+        <section>
+            <div>
+                <canvas id="myCanvas" style="border:1px solid #d3d3d3;"></canvas>
+            </div>
+        </section>
+        <aside>
+            <div>
+                <table style="width:100%">
+                    <tr>
+                        <th>CURRENT SCORE</th>
+                        <th>LIVES LEFT</th>
+                        <th>HIGH SCORE</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span id="score">0</span>
+                        </td>
+                        <td>
+                            <span id="life">3</span>
+                        </td>
+                        <td>
+                            <span id="hScore">0</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th colspan="3" onclick="startNewGame(true)">
+                            <button>New Game</button>
+                        </th>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <h1 id="gameOverMessage" style="display:none">
+                    GAME OVER
+                </h1>
+            </div>
+        </aside>
+    </div>
+    <script src="js_files/something.js"></script>
+</body>
 
 </html>

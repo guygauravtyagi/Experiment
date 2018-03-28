@@ -1,13 +1,20 @@
 var obstclesArray = [];
 var pointArray = [];
+var pauseFlag = false;
+var obstaclesTimeoutObj;
+var pointsTimeoutObj;
+var obstacleGenSpeed = 5000;
+var pointGenSpeed = 2000;
+var obsMaxSpeed = 5;
+var pointMaxSpeed = 5;
+
 var gameArea = {
     canvas: document.getElementById("myCanvas"),
     start: function () {
-        this.canvas.width = 700;
+        this.canvas.width = 800;
         this.canvas.height = 400;
         this.context = this.canvas.getContext("2d");
         this.context.fillStyle = "blue";
-        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.interval = setInterval(updateGameArea, 40);
     },
     clear: function () {
@@ -20,6 +27,39 @@ var gameArea = {
     }
 };
 
+var component = function (width, height, color, x, y) {
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.speedX = 0;
+    this.speedY = 0;
+    this.update = function () {
+        ctx = gameArea.context;
+        ctx.fillStyle = color;
+        if (this.x > gameArea.canvas.width - gamePiece.width) {
+            this.x = gameArea.canvas.width - gamePiece.width;
+        }
+        if (this.x < 0) {
+            this.x = 0;
+        }
+        if (this.y > gameArea.canvas.height - gamePiece.height) {
+            this.y = gameArea.canvas.height - gamePiece.height;
+        }
+        if (this.y < 0) {
+            this.y = 0;
+        }
+        ctx.shadowColor = '#999';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+    this.newPos = function () {
+        this.x += this.speedX;
+        this.y += this.speedY;
+    }
+}
 
 var points = function (radius, color, x, y, speedX, speedY) {
     this.radius = radius;
@@ -86,57 +126,24 @@ var obstacles = function (width, height, radius, color, x, y, speedX, speedY) {
     }
 };
 
-var component = function (width, height, color, x, y) {
-    this.width = width;
-    this.height = height;
-    this.x = x;
-    this.y = y;
-    this.speedX = 0;
-    this.speedY = 0;
-    this.update = function () {
-        ctx = gameArea.context;
-        ctx.fillStyle = color;
-        if (this.x > gameArea.canvas.width - gamePiece.width) {
-            this.x = gameArea.canvas.width - gamePiece.width;
-        }
-        if (this.x < 0) {
-            this.x = 0;
-        }
-        if (this.y > gameArea.canvas.height - gamePiece.height) {
-            this.y = gameArea.canvas.height - gamePiece.height;
-        }
-        if (this.y < 0) {
-            this.y = 0;
-        }
-        ctx.shadowColor = '#999';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 5;
-        ctx.shadowOffsetY = 5;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-    }
-    this.newPos = function () {
-        this.x += this.speedX;
-        this.y += this.speedY;
-    }
-}
-
-var startGame = function () {
-    gameArea.start();
-    gamePiece = new component(30, 30, "red", 10, 230);
-    continuousCall();
-    pointGenerator();
-};
-
 var generateRandomNumbers = function (upLimit, lowLimit) {
     return Math.floor((Math.random() * upLimit) + 1);
 };
 
 var pointGenerator = function () {
-    setTimeout(() => {
-        pointPiece = new points(10, 'yellow', 670, generateRandomNumbers(500), -generateRandomNumbers(5), 0);
+    pointsTimeoutObj = setTimeout(() => {
+        pointPiece = new points(10, 'yellow', gameArea.canvas.width, generateRandomNumbers(500), -generateRandomNumbers(pointMaxSpeed), 0);
         pointArray.push(pointPiece);
         pointGenerator();
-    }, generateRandomNumbers(2000));
+    }, generateRandomNumbers(pointGenSpeed));
+};
+
+var obstacleGenerator = function () {
+    obstaclesTimeoutObj = setTimeout(() => {
+        obstaclePiece = new obstacles(30, 30, 10, 'blue', gameArea.canvas.width, generateRandomNumbers(500), -generateRandomNumbers(obsMaxSpeed), 0);
+        obstclesArray.push(obstaclePiece);
+        obstacleGenerator();
+    }, generateRandomNumbers(obstacleGenSpeed));
 };
 
 var collisionChecker = function () {
@@ -144,15 +151,20 @@ var collisionChecker = function () {
     let obstacleFlag = 0;
     obstclesArray.forEach(element => {
         if (gamePiece.x > element.x && gamePiece.x < element.x + element.width && gamePiece.y > element.y && gamePiece.y < element.y + element.height
-            || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
-            || gamePiece.x > element.x && gamePiece.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
-            || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width + element.width && gamePiece.y > element.y && gamePiece.y < element.y + element.height) {
+            || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width < element.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
+            || gamePiece.x > element.x && gamePiece.x < element.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
+            || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width < element.x + element.width && gamePiece.y > element.y && gamePiece.y < element.y + element.height) {
             let value = parseInt(document.getElementById('life').innerText);
             value--;
             document.getElementById('life').innerText = value;
             if (value < 0) {
                 gameArea.stop();
                 document.getElementById('life').innerText = 0;
+                if (document.getElementById('hScore').innerText < document.getElementById('score').innerText) {
+                    document.getElementById('hScore').innerText = document.getElementById('score').innerText;
+                }
+                document.getElementById('gameOverMessage').style.color = 'red';
+                document.getElementById('gameOverMessage').style.display = '';
             }
             obstclesArray.splice(obstacleFlag, 1);
         }
@@ -164,9 +176,24 @@ var collisionChecker = function () {
             value = 1 - (-value);
             document.getElementById('score').innerText = value;
             pointArray.splice(pointFlag, 1);
+            gradualObstacleIncrease();
         }
         pointFlag++;
     });
+};
+
+var gradualObstacleIncrease = function () {
+    if(obstacleGenSpeed > 4000){
+        obstacleGenSpeed -= 20;
+    } else if(obstacleGenSpeed > 3000) {
+        obstacleGenSpeed -= 10;
+    } else if(obstacleGenSpeed > 2000) {
+        obstacleGenSpeed -= 5;
+    } else if(obstacleGenSpeed > 1000){
+        obstacleGenSpeed -= 2;
+    } else {
+        //do nothing
+    }
 };
 
 var rectCircleColliding = function (circle, rect) {
@@ -183,14 +210,6 @@ var rectCircleColliding = function (circle, rect) {
     var dy = distY - rect.height / 2;
     return (dx * dx + dy * dy <= (circle.radius * circle.radius));
 }
-
-var continuousCall = function () {
-    setTimeout(() => {
-        obstaclePiece = new obstacles(30, 30, 10, 'blue', 670, generateRandomNumbers(500), -generateRandomNumbers(5), 0);
-        obstclesArray.push(obstaclePiece);
-        continuousCall();
-    }, generateRandomNumbers(5000));
-};
 
 var updateObstacles = function () {
     let index = 0;
@@ -217,15 +236,16 @@ var updatePoints = function () {
 };
 
 var updateGameArea = function () {
-    gameArea.clear();
-    gamePiece.newPos();
-    gamePiece.update();
-    collisionChecker();
-    updateObstacles();
-    updatePoints();
+    if (!pauseFlag) {
+        gameArea.clear();
+        gamePiece.newPos();
+        gamePiece.update();
+        collisionChecker();
+        updateObstacles();
+        updatePoints();
+    }
 };
 
-startGame();
 document.getElementsByTagName("html")[0].onkeydown = function (event) {
     switch (event.key) {
         case 'ArrowRight': case 'd':
@@ -243,6 +263,16 @@ document.getElementsByTagName("html")[0].onkeydown = function (event) {
         case 'ArrowDown': case 's':
             gamePiece.speedY = 0;
             gamePiece.speedY = 10;
+            break;
+        case 'p':
+            if(!pauseFlag){
+                clearTimeout(obstaclesTimeoutObj);
+                clearTimeout(pointsTimeoutObj);
+            } else {
+                pointGenerator();
+                obstacleGenerator();
+            }
+            pauseFlag = !pauseFlag;
             break;
         default:
     }
@@ -265,3 +295,32 @@ document.getElementsByTagName("html")[0].onkeyup = function (event) {
         default:
     }
 };
+
+var startGame = function () {
+    gameArea.start();
+    gamePiece = new component(30, 30, "red", 10, 230);
+    obstacleGenerator();
+    pointGenerator();
+};
+
+var startNewGame = function (isFromRestartButton) {
+    gameArea.stop();
+    gameArea.clear();
+    obstclesArray = [];
+    pointArray = [];
+    pauseFlag = false;
+    clearTimeout(obstaclesTimeoutObj);
+    clearTimeout(pointsTimeoutObj);
+    if(isFromRestartButton){
+        resetScoreCard();
+    }
+    startGame();
+};
+
+var resetScoreCard = function() {
+    document.getElementById('life').innerText = 3;
+    document.getElementById('score').innerText = 0;
+    document.getElementById('gameOverMessage').style.display = 'none';
+};
+
+startGame();
