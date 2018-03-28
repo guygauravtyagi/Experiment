@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "RandomStuff",
+    "version": "1.0",
+    "description": "Does Stuff",
+    "homepage_url": "https://github.com/mdn/webextensions-examples/tree/master/beastify",
+    "permissions": [
+        "activeTab"
+    ],
+    "browser_action": {
+        "default_title": "Beastify",
+        "default_popup": "popup/randomStuff.html"
+    },
+    "web_accessible_resources": [
+        "beasts/frog.jpg",
+        "beasts/turtle.jpg",
+        "beasts/snake.jpg"
+    ]
+}
