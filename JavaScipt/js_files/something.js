@@ -8,6 +8,7 @@ var pointGenSpeed = 2000;
 var obsMaxSpeed = 5;
 var pointMaxSpeed = 5;
 
+//Prepare the area.
 var gameArea = {
     canvas: document.getElementById("myCanvas"),
     start: function () {
@@ -27,6 +28,7 @@ var gameArea = {
     }
 };
 
+//Component - your ship
 var component = function (width, height, color, x, y) {
     this.width = width;
     this.height = height;
@@ -34,6 +36,7 @@ var component = function (width, height, color, x, y) {
     this.y = y;
     this.speedX = 0;
     this.speedY = 0;
+    //update on the stuff
     this.update = function () {
         ctx = gameArea.context;
         ctx.fillStyle = color;
@@ -49,18 +52,21 @@ var component = function (width, height, color, x, y) {
         if (this.y < 0) {
             this.y = 0;
         }
+        //This add shadow to every other component
         ctx.shadowColor = '#999';
         ctx.shadowBlur = 10;
         ctx.shadowOffsetX = 5;
         ctx.shadowOffsetY = 5;
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
+    //define new position
     this.newPos = function () {
         this.x += this.speedX;
         this.y += this.speedY;
     }
 }
 
+//Use to generate the pointer objects. Which gives poins in the game
 var points = function (radius, color, x, y, speedX, speedY) {
     this.radius = radius;
     this.color = color;
@@ -89,6 +95,7 @@ var points = function (radius, color, x, y, speedX, speedY) {
     }
 };
 
+//Use to generate the obstacles
 var obstacles = function (width, height, radius, color, x, y, speedX, speedY) {
     this.width = width;
     this.height = height;
@@ -130,6 +137,12 @@ var generateRandomNumbers = function (upLimit, lowLimit) {
     return Math.floor((Math.random() * upLimit) + 1);
 };
 
+/*
+Timer function to create point component object.
+Now the thing is we have added random number generator to randomise the
+creation of the object. If you have any other way of generating component GO AHEAD.
+Change here.
+*/
 var pointGenerator = function () {
     pointsTimeoutObj = setTimeout(() => {
         pointPiece = new points(10, 'yellow', gameArea.canvas.width, generateRandomNumbers(500), -generateRandomNumbers(pointMaxSpeed), 0);
@@ -138,6 +151,7 @@ var pointGenerator = function () {
     }, generateRandomNumbers(pointGenSpeed));
 };
 
+//same thing for Obstacles
 var obstacleGenerator = function () {
     obstaclesTimeoutObj = setTimeout(() => {
         obstaclePiece = new obstacles(30, 30, 10, 'blue', gameArea.canvas.width, generateRandomNumbers(500), -generateRandomNumbers(obsMaxSpeed), 0);
@@ -146,6 +160,9 @@ var obstacleGenerator = function () {
     }, generateRandomNumbers(obstacleGenSpeed));
 };
 
+//check if we have collision between the player component and other two.
+//And do what hasa to be done.
+//Planning to add powerUps too.
 var collisionChecker = function () {
     let pointFlag = 0;
     let obstacleFlag = 0;
@@ -154,19 +171,9 @@ var collisionChecker = function () {
             || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width < element.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
             || gamePiece.x > element.x && gamePiece.x < element.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
             || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width < element.x + element.width && gamePiece.y > element.y && gamePiece.y < element.y + element.height) {
-            let value = parseInt(document.getElementById('life').innerText);
-            value--;
-            document.getElementById('life').innerText = value;
-            if (value < 0) {
-                gameArea.stop();
-                document.getElementById('life').innerText = 0;
-                if (document.getElementById('hScore').innerText < document.getElementById('score').innerText) {
-                    document.getElementById('hScore').innerText = document.getElementById('score').innerText;
-                }
-                document.getElementById('gameOverMessage').style.color = 'red';
-                document.getElementById('gameOverMessage').style.display = '';
-            }
-            obstclesArray.splice(obstacleFlag, 1);
+            if(onObstacleContact(parseInt(document.getElementById('life').innerText))){
+                obstclesArray.splice(obstacleFlag, 1);
+            }            
         }
         obstacleFlag++;
     });
@@ -182,6 +189,27 @@ var collisionChecker = function () {
     });
 };
 
+var onObstacleContact = function(lifeCount) {
+    lifeCount--;
+    document.getElementById('life').innerText = lifeCount;
+    if (lifeCount === 0) {
+        onGameLost();
+        return false;
+    }
+    return true;
+};
+
+var onGameLost = function () {
+    gameArea.stop();
+    document.getElementById('life').innerText = 0;
+    if (document.getElementById('hScore').innerText < document.getElementById('score').innerText) {
+        document.getElementById('hScore').innerText = document.getElementById('score').innerText;
+    }
+    document.getElementById('gameOverMessage').style.color = 'red';
+    document.getElementById('gameOverMessage').style.display = '';
+};
+
+//Increasae the rate of obstacle generation to keep things smooth.
 var gradualObstacleIncrease = function () {
     if(obstacleGenSpeed > 4000){
         obstacleGenSpeed -= 20;
@@ -196,6 +224,8 @@ var gradualObstacleIncrease = function () {
     }
 };
 
+//Collision detection between Rectangle and Circle 
+//Thank God for Stack Overflow
 var rectCircleColliding = function (circle, rect) {
     var distX = Math.abs(circle.x - rect.x - rect.width / 2);
     var distY = Math.abs(circle.y - rect.y - rect.height / 2);
@@ -211,6 +241,10 @@ var rectCircleColliding = function (circle, rect) {
     return (dx * dx + dy * dy <= (circle.radius * circle.radius));
 }
 
+/*
+Remove the obstacles from obstacle array to keep the size in check.
+If your Game is running slow you could have probably screwed here too.
+*/
 var updateObstacles = function () {
     let index = 0;
     obstclesArray.forEach(element => {
@@ -223,6 +257,7 @@ var updateObstacles = function () {
     });
 };
 
+//same as above for point components
 var updatePoints = function () {
     let index = 0;
     pointArray.forEach(element => {
@@ -235,6 +270,7 @@ var updatePoints = function () {
     });
 };
 
+//Update Game
 var updateGameArea = function () {
     if (!pauseFlag) {
         gameArea.clear();
@@ -246,6 +282,7 @@ var updateGameArea = function () {
     }
 };
 
+//Event catcher for whole page.
 document.getElementsByTagName("html")[0].onkeydown = function (event) {
     switch (event.key) {
         case 'ArrowRight': case 'd':
@@ -296,6 +333,7 @@ document.getElementsByTagName("html")[0].onkeyup = function (event) {
     }
 };
 
+//This is how you start Game
 var startGame = function () {
     gameArea.start();
     gamePiece = new component(30, 30, "red", 10, 230);
@@ -303,6 +341,7 @@ var startGame = function () {
     pointGenerator();
 };
 
+//Reload evey bit, if you are adding new things add it here to update them on reset button click.
 var startNewGame = function (isFromRestartButton) {
     gameArea.stop();
     gameArea.clear();
@@ -323,4 +362,11 @@ var resetScoreCard = function() {
     document.getElementById('gameOverMessage').style.display = 'none';
 };
 
+/*
+*
+*
+*LET THE GAME BEGIN - Are you dramatized enough?
+*
+*
+*/
 startGame();
