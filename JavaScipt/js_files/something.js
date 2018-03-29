@@ -5,23 +5,30 @@ var obstaclesTimeoutObj;
 var pointsTimeoutObj;
 var obstacleGenSpeed = 5000;
 var pointGenSpeed = 2000;
-var obsMaxSpeed = 5;
-var pointMaxSpeed = 5;
+var obsMaxSpeed = 6;
+var pointMaxSpeed = 6;
 
 //Prepare the area.
 var gameArea = {
     canvas: document.getElementById("myCanvas"),
+    addBackground: function (ctx) {
+        var img = new Image();
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0);
+            ctx.beginPath();
+            ctx.stroke();
+        };
+        img.src = './images/backGround.jpg';
+    },
     start: function () {
-        this.canvas.width = 800;
-        this.canvas.height = 400;
+        this.canvas.width = 845;
+        this.canvas.height = 500;
         this.context = this.canvas.getContext("2d");
         this.context.fillStyle = "blue";
         this.interval = setInterval(updateGameArea, 40);
     },
     clear: function () {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.context.fillStyle = "#90EE90";
-        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     },
     stop: function () {
         clearInterval(this.interval);
@@ -32,6 +39,8 @@ var gameArea = {
 var component = function (width, height, color, x, y) {
     this.width = width;
     this.height = height;
+    this.image = new Image();
+    this.image.src = './images/Ship.png';
     this.x = x;
     this.y = y;
     this.speedX = 0;
@@ -53,11 +62,11 @@ var component = function (width, height, color, x, y) {
             this.y = 0;
         }
         //This add shadow to every other component
-        ctx.shadowColor = '#999';
+        ctx.shadowColor = '#333';
         ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 5;
-        ctx.shadowOffsetY = 5;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
     }
     //define new position
     this.newPos = function () {
@@ -72,6 +81,8 @@ var points = function (radius, color, x, y, speedX, speedY) {
     this.color = color;
     this.x = x;
     this.y = y;
+    this.image = new Image();
+    this.image.src = './images/power.png';
     if (!speedX) {
         this.speedX = -5;
     } else {
@@ -84,10 +95,14 @@ var points = function (radius, color, x, y, speedX, speedY) {
     }
     this.update = function () {
         ctx = gameArea.context;
-        ctx.fillStyle = this.color;
         ctx.beginPath();
+        var grd = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, this.radius);
+        grd.addColorStop(0, this.color);
+        grd.addColorStop(1, "white");
+        ctx.fillStyle = grd;
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
         ctx.fill();
+        ctx.drawImage(this.image, (this.x + this.radius * Math.sin(225 * (2 * Math.PI / 360))), (this.y + this.radius * Math.sin(225 * (2 * Math.PI / 360))), Math.sqrt(Math.pow((2 * this.radius), 2) / 2), Math.sqrt(Math.pow((2 * this.radius), 2) / 2));
     }
     this.newPos = function () {
         this.x += this.speedX;
@@ -102,6 +117,7 @@ var obstacles = function (width, height, radius, color, x, y, speedX, speedY) {
     this.radius = radius;
     this.x = x;
     this.y = y;
+    this.image = new Image();
     if (!speedX) {
         this.speedX = -5;
     } else {
@@ -114,23 +130,22 @@ var obstacles = function (width, height, radius, color, x, y, speedX, speedY) {
     }
     this.update = function () {
         ctx = gameArea.context;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y + this.radius);
-        ctx.lineTo(this.x, this.y + this.height - this.radius);
-        ctx.arcTo(this.x, this.y + this.height, this.x + this.radius, this.y + this.height, this.radius);
-        ctx.lineTo(this.x + this.width - this.radius, this.y + this.height);
-        ctx.arcTo(this.x + this.width, this.y + this.height, this.x + this.width, this.y + this.height - this.radius, this.radius);
-        ctx.lineTo(this.x + this.width, this.y + this.radius);
-        ctx.arcTo(this.x + this.width, this.y, this.x + this.width - this.radius, this.y, this.radius);
-        ctx.lineTo(this.x + this.radius, this.y);
-        ctx.arcTo(this.x, this.y, this.x, this.y + this.radius, this.radius);
-        ctx.fill();
+        this.image.src = addVariations(this.speedX);
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
     }
     this.newPos = function () {
         this.x += this.speedX;
         this.y += this.speedY;
     }
+};
+
+var addVariations = function (value) {
+    if (value % 3 === 0) {
+        return './images/obstacles/Obstacle3.png';
+    } else if (value % 2 === 0) {
+        return './images/obstacles/Obstacle2.png';
+    }
+    return './images/obstacles/Obstacle1.png';
 };
 
 var generateRandomNumbers = function (upLimit, lowLimit) {
@@ -145,7 +160,7 @@ Change here.
 */
 var pointGenerator = function () {
     pointsTimeoutObj = setTimeout(() => {
-        pointPiece = new points(10, 'yellow', gameArea.canvas.width, generateRandomNumbers(500), -generateRandomNumbers(pointMaxSpeed), 0);
+        pointPiece = new points(11, 'yellow', gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(pointMaxSpeed), 0);
         pointArray.push(pointPiece);
         pointGenerator();
     }, generateRandomNumbers(pointGenSpeed));
@@ -154,7 +169,7 @@ var pointGenerator = function () {
 //same thing for Obstacles
 var obstacleGenerator = function () {
     obstaclesTimeoutObj = setTimeout(() => {
-        obstaclePiece = new obstacles(30, 30, 10, 'blue', gameArea.canvas.width, generateRandomNumbers(500), -generateRandomNumbers(obsMaxSpeed), 0);
+        obstaclePiece = new obstacles(40, 40, 10, 'blue', gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(obsMaxSpeed), 0);
         obstclesArray.push(obstaclePiece);
         obstacleGenerator();
     }, generateRandomNumbers(obstacleGenSpeed));
@@ -171,9 +186,9 @@ var collisionChecker = function () {
             || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width < element.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
             || gamePiece.x > element.x && gamePiece.x < element.x + element.width && gamePiece.y + gamePiece.height > element.y && gamePiece.y + gamePiece.height < element.y + element.height
             || gamePiece.x + gamePiece.width > element.x && gamePiece.x + gamePiece.width < element.x + element.width && gamePiece.y > element.y && gamePiece.y < element.y + element.height) {
-            if(onObstacleContact(parseInt(document.getElementById('life').innerText))){
+            if (onObstacleContact(parseInt(document.getElementById('life').innerText))) {
                 obstclesArray.splice(obstacleFlag, 1);
-            }            
+            }
         }
         obstacleFlag++;
     });
@@ -189,7 +204,7 @@ var collisionChecker = function () {
     });
 };
 
-var onObstacleContact = function(lifeCount) {
+var onObstacleContact = function (lifeCount) {
     lifeCount--;
     document.getElementById('life').innerText = lifeCount;
     if (lifeCount === 0) {
@@ -211,13 +226,13 @@ var onGameLost = function () {
 
 //Increasae the rate of obstacle generation to keep things smooth.
 var gradualObstacleIncrease = function () {
-    if(obstacleGenSpeed > 4000){
+    if (obstacleGenSpeed > 4000) {
         obstacleGenSpeed -= 20;
-    } else if(obstacleGenSpeed > 3000) {
+    } else if (obstacleGenSpeed > 3000) {
         obstacleGenSpeed -= 10;
-    } else if(obstacleGenSpeed > 2000) {
+    } else if (obstacleGenSpeed > 2000) {
         obstacleGenSpeed -= 5;
-    } else if(obstacleGenSpeed > 1000){
+    } else if (obstacleGenSpeed > 1000) {
         obstacleGenSpeed -= 2;
     } else {
         //do nothing
@@ -302,7 +317,7 @@ document.getElementsByTagName("html")[0].onkeydown = function (event) {
             gamePiece.speedY = 10;
             break;
         case 'p':
-            if(!pauseFlag){
+            if (!pauseFlag) {
                 clearTimeout(obstaclesTimeoutObj);
                 clearTimeout(pointsTimeoutObj);
             } else {
@@ -336,7 +351,7 @@ document.getElementsByTagName("html")[0].onkeyup = function (event) {
 //This is how you start Game
 var startGame = function () {
     gameArea.start();
-    gamePiece = new component(30, 30, "red", 10, 230);
+    gamePiece = new component(50, 40, "red", 10, 230);
     obstacleGenerator();
     pointGenerator();
 };
@@ -350,13 +365,13 @@ var startNewGame = function (isFromRestartButton) {
     pauseFlag = false;
     clearTimeout(obstaclesTimeoutObj);
     clearTimeout(pointsTimeoutObj);
-    if(isFromRestartButton){
+    if (isFromRestartButton) {
         resetScoreCard();
     }
     startGame();
 };
 
-var resetScoreCard = function() {
+var resetScoreCard = function () {
     document.getElementById('life').innerText = 3;
     document.getElementById('score').innerText = 0;
     document.getElementById('gameOverMessage').style.display = 'none';
