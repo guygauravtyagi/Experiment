@@ -1,12 +1,23 @@
 var obstclesArray = [];
 var pointArray = [];
 var pauseFlag = false;
+const POINT_GEN_CONST = 2000;
+const OBS_GEN_CONST = 5000;
+const POWERUP_GEN_CONST = 30000;
+const OBS_MAX_SPEED_CONST = 6;
+const POINT_MAX_SPEED_CONST = 6;
+const POWERUP_MAX_SPEED_CONST = 6;
 var obstaclesTimeoutObj;
 var pointsTimeoutObj;
-var obstacleGenSpeed = 5000;
-var pointGenSpeed = 2000;
-var obsMaxSpeed = 6;
-var pointMaxSpeed = 6;
+var powerUpTimeoutObj;
+var obstacleGenSpeed = OBS_GEN_CONST;
+var pointGenSpeed = POINT_GEN_CONST;
+var powerUpGenSpeed = POWERUP_GEN_CONST;
+var obsMaxSpeed = OBS_MAX_SPEED_CONST;
+var pointMaxSpeed = POINT_MAX_SPEED_CONST;
+var powerUpMaxSpeed = POWERUP_MAX_SPEED_CONST;
+var makeImmuneFlag = false;
+var powerUpArray = ['plus50', 'plus100', 'speedBoost', 'speedSlow', 'immune', 'batteryCatcher'];
 
 //Prepare the area.
 var gameArea = {
@@ -76,15 +87,22 @@ var component = function (width, height, color, x, y) {
 }
 
 //Use to generate the pointer objects. Which gives poins in the game
-var points = function (radius, color, x, y, speedX, speedY) {
+var points = function (radius, color, gradColor, x, y, speedX, speedY, isPowerUp, type) {
     this.radius = radius;
     this.color = color;
+    this.gradColor = gradColor;
     this.x = x;
     this.y = y;
+    this.isPowerUp = isPowerUp;
     this.image = new Image();
-    this.image.src = './images/power.png';
+    if (this.isPowerUp) {
+        this.image.src = './images/batteryPower.png';
+        this.type = type;
+    } else {
+        this.image.src = './images/power.png';
+    }
     if (!speedX) {
-        this.speedX = -5;
+        this.speedX = -POINT_MAX_SPEED_CONST;
     } else {
         this.speedX = speedX;
     }
@@ -96,9 +114,9 @@ var points = function (radius, color, x, y, speedX, speedY) {
     this.update = function () {
         ctx = gameArea.context;
         ctx.beginPath();
-        var grd = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, this.radius);
+        var grd = ctx.createRadialGradient(this.x, this.y, 6, this.x, this.y, this.radius);
         grd.addColorStop(0, this.color);
-        grd.addColorStop(1, "white");
+        grd.addColorStop(1, this.gradColor);
         ctx.fillStyle = grd;
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
         ctx.fill();
@@ -119,7 +137,7 @@ var obstacles = function (width, height, radius, color, x, y, speedX, speedY) {
     this.y = y;
     this.image = new Image();
     if (!speedX) {
-        this.speedX = -5;
+        this.speedX = - OBS_MAX_SPEED_CONST;
     } else {
         this.speedX = speedX;
     }
@@ -160,7 +178,7 @@ Change here.
 */
 var pointGenerator = function () {
     pointsTimeoutObj = setTimeout(() => {
-        pointPiece = new points(11, 'yellow', gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(pointMaxSpeed), 0);
+        pointPiece = new points(12, '#FFD700', "#666", gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(pointMaxSpeed), 0, false);
         pointArray.push(pointPiece);
         pointGenerator();
     }, generateRandomNumbers(pointGenSpeed));
@@ -173,6 +191,14 @@ var obstacleGenerator = function () {
         obstclesArray.push(obstaclePiece);
         obstacleGenerator();
     }, generateRandomNumbers(obstacleGenSpeed));
+};
+
+var powerUpGenerator = function () {
+    powerUpTimeoutObj = setTimeout(() => {
+        pointPiece = new points(15, 'limegreen', "#aaa", gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(pointMaxSpeed), 0, true, powerUpArray[Math.floor(Math.random() * powerUpArray.length)]);
+        pointArray.push(pointPiece);
+        powerUpGenerator();
+    }, (generateRandomNumbers(powerUpGenSpeed) > 20000 ? generateRandomNumbers(powerUpGenSpeed) : 20000));
 };
 
 //check if we have collision between the player component and other two.
@@ -198,6 +224,9 @@ var collisionChecker = function () {
             value = 1 - (-value);
             document.getElementById('score').innerText = value;
             pointArray.splice(pointFlag, 1);
+            if (element.isPowerUp) {
+                initiatePowerUp(element);
+            }
             gradualObstacleIncrease();
         }
         pointFlag++;
@@ -205,7 +234,9 @@ var collisionChecker = function () {
 };
 
 var onObstacleContact = function (lifeCount) {
-    lifeCount--;
+    if (!makeImmuneFlag) {
+        lifeCount--;
+    }
     document.getElementById('life').innerText = lifeCount;
     if (lifeCount === 0) {
         onGameLost();
@@ -255,6 +286,94 @@ var rectCircleColliding = function (circle, rect) {
     var dy = distY - rect.height / 2;
     return (dx * dx + dy * dy <= (circle.radius * circle.radius));
 }
+
+//['plus50', 'plus100', 'speedBoost', 'speedSlow', 'immune', 'batteryCatcher']
+var initiatePowerUp = function (powerUp) {
+    switch (powerUp.type) {
+        case 'plus50':
+            addScore(50);
+            break;
+        case 'plus100':
+            addScore(100);
+            break;
+        case 'immune':
+            makeImmune();
+            break;
+        case 'speedBoost':
+            increaseSpeed();
+            break;
+        case 'speedSlow':
+            reduceSpeed();
+            break;
+        case 'batteryCatcher':
+            initiateBatteryCatcher();
+            break;
+        default:
+    }
+    ctx = gameArea.canvas.getContext("2d");
+    ctx.font = "30px Arial";
+    ctx.fillText(powerUp.type,10,50);
+};
+
+var initiateBatteryCatcher = function () {
+    clearTimeout(obstaclesTimeoutObj);
+    clearTimeout(powerUpTimeoutObj);
+    obstclesArray.length = 0;
+    pointGenSpeed = 100;
+    setTimeout(() => {
+        obstacleGenerator();
+        powerUpGenerator();
+        pointGenSpeed = POINT_GEN_CONST;
+    }, 5000);
+};
+
+var addScore = function(increment) {
+    let value = document.getElementById('score').innerText;
+    value = increment - (-value);
+    document.getElementById('score').innerText = value;
+};
+
+var makeImmune = function() {
+    makeImmuneFlag = true;
+    setTimeout(() => {
+        makeImmuneFlag = false;
+    }, 10);
+};
+
+var increaseSpeed = function () {
+    obstclesArray.forEach(element => {
+        element.speedX *= 3;
+    });
+    pointArray.forEach(element => {
+        element.speedX *= 3;
+    });
+    pointMaxSpeed = 2;
+    obsMaxSpeed = 2;
+    powerUpMaxSpeed = 2;
+    setTimeout(() => {
+        pointMaxSpeed = POINT_MAX_SPEED_CONST;
+        obsMaxSpeed = OBS_MAX_SPEED_CONST;
+        powerUpMaxSpeed = POWERUP_MAX_SPEED_CONST;
+    }, 10000);
+};
+
+var reduceSpeed = function () {
+    obstclesArray.forEach(element => {
+        element.speedX /= 3;
+    });
+    pointArray.forEach(element => {
+        element.speedX /= 3;
+    });
+    pointMaxSpeed = 18;
+    obsMaxSpeed = 18;
+    powerUpMaxSpeed = 18;
+    setTimeout(() => {
+        pointMaxSpeed = POINT_MAX_SPEED_CONST;
+        obsMaxSpeed = OBS_MAX_SPEED_CONST;
+        powerUpMaxSpeed = POWERUP_MAX_SPEED_CONST;
+    }, 10000);
+    
+};
 
 /*
 Remove the obstacles from obstacle array to keep the size in check.
@@ -320,9 +439,11 @@ document.getElementsByTagName("html")[0].onkeydown = function (event) {
             if (!pauseFlag) {
                 clearTimeout(obstaclesTimeoutObj);
                 clearTimeout(pointsTimeoutObj);
+                clearTimeout(powerUpTimeoutObj);
             } else {
                 pointGenerator();
                 obstacleGenerator();
+                powerUpGenerator();
             }
             pauseFlag = !pauseFlag;
             break;
@@ -354,6 +475,7 @@ var startGame = function () {
     gamePiece = new component(50, 40, "red", 10, 230);
     obstacleGenerator();
     pointGenerator();
+    powerUpGenerator();
 };
 
 //Reload evey bit, if you are adding new things add it here to update them on reset button click.
@@ -365,6 +487,7 @@ var startNewGame = function (isFromRestartButton) {
     pauseFlag = false;
     clearTimeout(obstaclesTimeoutObj);
     clearTimeout(pointsTimeoutObj);
+    clearTimeout(powerUpTimeoutObj);
     if (isFromRestartButton) {
         resetScoreCard();
     }
