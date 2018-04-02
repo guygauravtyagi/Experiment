@@ -87,7 +87,7 @@ var component = function (width, height, color, x, y) {
 }
 
 //Use to generate the pointer objects. Which gives poins in the game
-var points = function (radius, color, gradColor, x, y, speedX, speedY, isPowerUp, type) {
+var points = function (radius, color, gradColor, x, y, speedX, speedY, isPowerUp, powerUpObj) {
     this.radius = radius;
     this.color = color;
     this.gradColor = gradColor;
@@ -96,8 +96,8 @@ var points = function (radius, color, gradColor, x, y, speedX, speedY, isPowerUp
     this.isPowerUp = isPowerUp;
     this.image = new Image();
     if (this.isPowerUp) {
-        this.image.src = './images/batteryPower.png';
-        this.type = type;
+        this.image.src = powerUpObj.srcImage;
+        this.type = powerUpObj.type;
     } else {
         this.image.src = './images/power.png';
     }
@@ -166,6 +166,19 @@ var addVariations = function (value) {
     return './images/obstacles/Obstacle1.png';
 };
 
+var showText = function (text, height, color, x, y) {
+    this.text;
+    this.height = height;
+    this.color = color;
+    this.x = x;
+    this.y = y;
+    this.update = function () {
+        ctx = gameArea.canvas.getContext("2d");
+        ctx.font = this.height + "px Arial";
+        ctx.fillText(this.text, this.x, this.y);
+    }
+};
+
 var generateRandomNumbers = function (upLimit, lowLimit) {
     return Math.floor((Math.random() * upLimit) + 1);
 };
@@ -195,10 +208,61 @@ var obstacleGenerator = function () {
 
 var powerUpGenerator = function () {
     powerUpTimeoutObj = setTimeout(() => {
-        pointPiece = new points(15, 'limegreen', "#aaa", gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(pointMaxSpeed), 0, true, powerUpArray[Math.floor(Math.random() * powerUpArray.length)]);
+        let powerUpObj = addPowerUpVariation(powerUpArray[Math.floor(Math.random() * powerUpArray.length)]);
+        pointPiece = new points(powerUpObj.radius, powerUpObj.color, powerUpObj.gradColor, gameArea.canvas.width, generateRandomNumbers(gameArea.canvas.height), -generateRandomNumbers(pointMaxSpeed), 0, true, powerUpObj);
         pointArray.push(pointPiece);
         powerUpGenerator();
     }, (generateRandomNumbers(powerUpGenSpeed) > 20000 ? generateRandomNumbers(powerUpGenSpeed) : 20000));
+};
+
+var addPowerUpVariation = function (powerUpName) {
+    let variationObj = {};
+    switch (powerUpName) {
+        case 'plus50':
+            variationObj['radius'] = 13;
+            variationObj['color'] = 'pink';
+            variationObj['gradColor'] = 'white';
+            variationObj['type'] = 'plus50';
+            variationObj['srcImage'] = './images/50.png';
+            break;
+        case 'plus100':
+            variationObj['radius'] = 25;
+            variationObj['color'] = 'pink';
+            variationObj['gradColor'] = 'white';
+            variationObj['type'] = 'plus100';
+            variationObj['srcImage'] = './images/100.png';
+            break;
+        case 'immune':
+            variationObj['radius'] = 15;
+            variationObj['color'] = 'blue';
+            variationObj['gradColor'] = 'white';
+            variationObj['type'] = 'immune';
+            variationObj['srcImage'] = './images/immune.png';
+            break;
+        case 'speedBoost':
+            variationObj['radius'] = 20;
+            variationObj['color'] = '#ff5733';
+            variationObj['gradColor'] = 'white';
+            variationObj['type'] = 'speedBoost';
+            variationObj['srcImage'] = './images/speed.png';
+            break;
+        case 'speedSlow':
+            variationObj['radius'] = 12;
+            variationObj['color'] = '#33ffe9';
+            variationObj['gradColor'] = 'white';
+            variationObj['type'] = 'speedSlow';
+            variationObj['srcImage'] = './images/Slow.png';
+            break;
+        case 'batteryCatcher':
+            variationObj['radius'] = 18;
+            variationObj['color'] = 'green';
+            variationObj['gradColor'] = '#ddd';
+            variationObj['type'] = 'batteryCatcher';
+            variationObj['srcImage'] = './images/batteryPower.png';
+            break;
+        default:
+    }
+    return variationObj;
 };
 
 //check if we have collision between the player component and other two.
@@ -310,9 +374,6 @@ var initiatePowerUp = function (powerUp) {
             break;
         default:
     }
-    ctx = gameArea.canvas.getContext("2d");
-    ctx.font = "30px Arial";
-    ctx.fillText(powerUp.type,10,50);
 };
 
 var initiateBatteryCatcher = function () {
@@ -324,20 +385,20 @@ var initiateBatteryCatcher = function () {
         obstacleGenerator();
         powerUpGenerator();
         pointGenSpeed = POINT_GEN_CONST;
-    }, 5000);
+    }, 10000);
 };
 
-var addScore = function(increment) {
+var addScore = function (increment) {
     let value = document.getElementById('score').innerText;
     value = increment - (-value);
     document.getElementById('score').innerText = value;
 };
 
-var makeImmune = function() {
+var makeImmune = function () {
     makeImmuneFlag = true;
     setTimeout(() => {
         makeImmuneFlag = false;
-    }, 10);
+    }, 10000);
 };
 
 var increaseSpeed = function () {
@@ -347,9 +408,9 @@ var increaseSpeed = function () {
     pointArray.forEach(element => {
         element.speedX *= 3;
     });
-    pointMaxSpeed = 2;
-    obsMaxSpeed = 2;
-    powerUpMaxSpeed = 2;
+    pointMaxSpeed = 20;
+    obsMaxSpeed = 20;
+    powerUpMaxSpeed = 20;
     setTimeout(() => {
         pointMaxSpeed = POINT_MAX_SPEED_CONST;
         obsMaxSpeed = OBS_MAX_SPEED_CONST;
@@ -364,15 +425,15 @@ var reduceSpeed = function () {
     pointArray.forEach(element => {
         element.speedX /= 3;
     });
-    pointMaxSpeed = 18;
-    obsMaxSpeed = 18;
-    powerUpMaxSpeed = 18;
+    pointMaxSpeed = 2;
+    obsMaxSpeed = 2;
+    powerUpMaxSpeed = 2;
     setTimeout(() => {
         pointMaxSpeed = POINT_MAX_SPEED_CONST;
         obsMaxSpeed = OBS_MAX_SPEED_CONST;
         powerUpMaxSpeed = POWERUP_MAX_SPEED_CONST;
     }, 10000);
-    
+
 };
 
 /*
