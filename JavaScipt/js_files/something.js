@@ -47,6 +47,7 @@ var gameArea = {
 };
 
 //Component - your ship
+// center of Ship = (x+width/2,y+height/2)
 var component = function (width, height, color, x, y) {
     this.width = width;
     this.height = height;
