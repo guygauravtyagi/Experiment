@@ -36,7 +36,7 @@ var gameArea = {
         this.canvas.height = 500;
         this.context = this.canvas.getContext("2d");
         this.context.fillStyle = "blue";
-        this.interval = setInterval(updateGameArea, 40);
+        this.interval = setInterval(updateGameArea, 50);
     },
     clear: function () {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
