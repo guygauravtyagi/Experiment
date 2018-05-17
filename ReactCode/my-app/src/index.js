@@ -170,16 +170,20 @@ function learnStuff (history) {
 
 function getSteps(history) {
     let steps = [];
-    history[index].squares[i]
+    let recorded = {};
+    let isFirstPic = true;
     history.forEach(element => {
         const squares = element.squares;
-        let recorded = {};
-        for (let index = 0; index < squares.length; index++) {            
-            recorded[]
-            if (squares[index] === "O") {
-                
+        for (let index = 0; index < squares.length; index++) {
+            if(isFirstPic){
+                recorded[index] = true;
+            }          
+            if (squares[index] === "O" && recorded[index] === true) {
+                steps.push(index);
+                recorded[index] = false;
             }
         }
+        isFirstPic = false;
     });
     return steps;
 }
