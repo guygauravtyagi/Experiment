@@ -170,11 +170,17 @@ function learnStuff (history) {
 
 function getSteps(history) {
     let steps = [];
-    for (let index = 0; index < history.length; index++) {
-        if (history[index] === "O") {
-            steps.push[index];
+    history[index].squares[i]
+    history.forEach(element => {
+        const squares = element.squares;
+        let recorded = {};
+        for (let index = 0; index < squares.length; index++) {            
+            recorded[]
+            if (squares[index] === "O") {
+                
+            }
         }
-    }
+    });
     return steps;
 }
 
