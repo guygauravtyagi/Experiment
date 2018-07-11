@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" /> -->
+    <script src="main.js"></script>
+</head>
+
+<style>
+    @media screen and (min-width: 1200px) and (min-width: 200px) {
+        .grid-container {
+            grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
+        }
+    }
+
+@media screen and (min-width: 1000px) and (max-width: 1200px) {
+        .grid-container {
+            grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+        }
+    }
+
+    @media screen and (min-width: 800px) and (max-width: 1000px) {
+        .grid-container {
+            grid-template-columns: auto auto auto auto auto auto auto auto;
+        }
+    }
+
+    @media screen and (min-width: 600px) and (max-width: 800px) {
+        .grid-container {
+            grid-template-columns: auto auto auto auto auto auto;
+        }
+    }
+
+    @media screen and (min-width: 400px) and (max-width: 600px) {
+        .grid-container {
+            grid-template-columns: auto auto auto auto;
+        }
+    }
+    
+    @media screen and (min-width: 200px) and (max-width: 400px) {
+        .grid-container {
+            grid-template-columns: auto auto;
+        }
+    }
+
+    button {
+        outline: none;
+        border:none;
+        width: 15px;
+        height: 40px;
+        margin-top: 3px;
+        margin-right: 2px;
+        text-align: center;
+        align-content: center;
+    }
+
+    button:hover {
+        height: 44px;
+    }
+
+    .button_active {
+        height: 44px;
+        border: 1px solid black;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-gap: 5px;
+        background-color: #fff;
+        padding: 5px;
+    }
+
+    .grid-container>div {
+        text-align: center;
+        padding: 5px;
+    }
+
+    .matrix-container {
+        grid-template-columns: auto auto auto auto auto;
+        display: grid;
+        grid-gap: 1px;
+        background-color: #fff;
+        padding: 1px;
+    }
+
+    .matrix {
+        grid-template-columns: auto auto auto auto auto;
+        display: grid;
+        grid-gap: 1px;
+        background-color: #fff;
+        padding: 1px;
+    }
+
+    .matrix-container>div {
+        text-align: center;
+        padding: 1px;
+    }
+</style>
+
+<body>
+    <header>
+        <div id="buttons-container"></div>
+        <div id="matrix"></div>
+        <div id="insideEdge"></div>
+    </header>
+    <div class="grid-container" id="stuff-container"></div>
+    <footer>
+
+    </footer>
+</body>
+
+</html>

@@ -15,7 +15,7 @@ class Board extends React.Component {
         return (
             <Square
                 value={this.props.squares[i]}
-                onClick={() => this.props.onClick(i)}
+                onClick={() => this.props.onClick(i, true)}
             />
         );
     }
@@ -53,9 +53,10 @@ class Game extends React.Component {
             stepNumber: 0,
             xIsNext: true,
         };
+        this.learnHistory = [];
     }
 
-    handleClick(i) {
+    handleClick(i, isFromClick) {
         const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
         const squares = current.squares.slice();
@@ -70,6 +71,9 @@ class Game extends React.Component {
             stepNumber: history.length,
             xIsNext: !this.state.xIsNext,
         });
+        if (isFromClick) {
+            this.decideMove();
+        }
     }
 
     jumpTo(step) {
@@ -77,6 +81,59 @@ class Game extends React.Component {
             stepNumber: step,
             xIsNext: (step % 2) === 0,
         });
+        if (step === 0) {
+            this.decideMove();
+        }
+    }
+
+    learnStuff(history) {
+        let isNotPresent = true;
+        const steps = this.getSteps(history);
+        this.learnHistory.forEach(element => {
+            if (checkIsEqual(element.steps, steps)) {
+                isNotPresent = false;
+            }
+        });
+        if (isNotPresent) {
+            this.learnHistory.push({
+                canUse: true,
+                steps: steps,
+            });
+        } else {
+            //do nothing
+        }
+    };
+
+    decideMove() {
+        if (this.learnHistory.length > 0) {
+            this.handleClick();
+        } else {
+            this.handleClick(Math.floor((Math.random() * 9) + 1));
+        }
+    };
+
+    getSteps(history) {
+        let steps = [];
+        let recorded = {};
+        let isFirstPic = true;
+        history.forEach(element => {
+            const squares = element.squares;
+            for (let index = 0; index < squares.length; index++) {
+                if (isFirstPic) {
+                    recorded[index] = true;
+                }
+                if (squares[index] === "O" && recorded[index] === true) {
+                    steps.push(index);
+                    recorded[index] = false;
+                }
+            }
+            isFirstPic = false;
+        });
+        return steps;
+    }
+
+    stepMove () {
+        
     }
 
     render() {
@@ -99,7 +156,7 @@ class Game extends React.Component {
         if (winner) {
             status = 'Winner: ' + winner;
             if (winner === 'O') {
-                learnStuff(history);
+                this.learnStuff(history);
             }
         } else {
             status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
@@ -110,7 +167,7 @@ class Game extends React.Component {
                 <div className="game-board">
                     <Board
                         squares={current.squares}
-                        onClick={(i) => this.handleClick(i)}
+                        onClick={(i) => this.handleClick(i, true)}
                     />
                 </div>
                 <div className="game-info">
@@ -151,75 +208,38 @@ function calculateWinner(squares) {
     return null;
 }
 
-var learnHistory = [];
-
-function learnStuff (history) {
-    let isNotPresent = true;
-    const steps = getSteps(history);
-    learnHistory.forEach(element => {
-        if (checkIsEqual(element, steps)) {
-            isNotPresent = false;
+function checkIsEqual(value, other) {
+    var type = Object.prototype.toString.call(value);
+    if (type !== Object.prototype.toString.call(other)) return false;
+    if (['[object Array]', '[object Object]'].indexOf(type) < 0) return false;
+    var valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
+    var otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
+    if (valueLen !== otherLen) return false;
+    var compare = function (item1, item2) {
+        var itemType = Object.prototype.toString.call(item1);
+        if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0) {
+            if (!checkIsEqual(item1, item2)) return false;
         }
-    });
-    if(isNotPresent){
-        learnHistory.push(steps);
-    } else {
-        //do nothing
-    }
-}
+        else {
+            if (itemType !== Object.prototype.toString.call(item2)) return false;
+            if (itemType === '[object Function]') {
+                if (item1.toString() !== item2.toString()) return false;
+            } else {
+                if (item1 !== item2) return false;
+            }
 
-function getSteps(history) {
-    let steps = [];
-    let recorded = {};
-    let isFirstPic = true;
-    history.forEach(element => {
-        const squares = element.squares;
-        for (let index = 0; index < squares.length; index++) {
-            if(isFirstPic){
-                recorded[index] = true;
-            }          
-            if (squares[index] === "O" && recorded[index] === true) {
-                steps.push(index);
-                recorded[index] = false;
+        }
+    };
+    if (type === '[object Array]') {
+        for (var i = 0; i < valueLen; i++) {
+            if (compare(value[i], other[i]) === false) return false;
+        }
+    } else {
+        for (var key in value) {
+            if (value.hasOwnProperty(key)) {
+                if (compare(value[key], other[key]) === false) return false;
             }
         }
-        isFirstPic = false;
-    });
-    return steps;
-}
-
-function checkIsEqual(value, other) {
-	var type = Object.prototype.toString.call(value);
-	if (type !== Object.prototype.toString.call(other)) return false;
-	if (['[object Array]', '[object Object]'].indexOf(type) < 0) return false;
-	var valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
-	var otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
-	if (valueLen !== otherLen) return false;
-	var compare = function (item1, item2) {
-		var itemType = Object.prototype.toString.call(item1);
-		if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0) {
-			if (!checkIsEqual(item1, item2)) return false;
-		}
-		else {
-			if (itemType !== Object.prototype.toString.call(item2)) return false;
-			if (itemType === '[object Function]') {
-				if (item1.toString() !== item2.toString()) return false;
-			} else {
-				if (item1 !== item2) return false;
-			}
-
-		}
-	};
-	if (type === '[object Array]') {
-		for (var i = 0; i < valueLen; i++) {
-			if (compare(value[i], other[i]) === false) return false;
-		}
-	} else {
-		for (var key in value) {
-			if (value.hasOwnProperty(key)) {
-				if (compare(value[key], other[key]) === false) return false;
-			}
-		}
-	}
-	return true;
+    }
+    return true;
 };
