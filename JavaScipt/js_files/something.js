@@ -57,34 +57,36 @@ var component = function (width, height, color, x, y) {
     this.y = y;
     this.speedX = 0;
     this.speedY = 0;
-    //update on the stuff
-    this.update = function () {
-        ctx = gameArea.context;
-        ctx.fillStyle = color;
-        if (this.x > gameArea.canvas.width - gamePiece.width) {
-            this.x = gameArea.canvas.width - gamePiece.width;
-        }
-        if (this.x < 0) {
-            this.x = 0;
-        }
-        if (this.y > gameArea.canvas.height - gamePiece.height) {
-            this.y = gameArea.canvas.height - gamePiece.height;
-        }
-        if (this.y < 0) {
-            this.y = 0;
-        }
-        //This add shadow to every other component
-        ctx.shadowColor = '#333';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    this.color = color;
+}
+
+//update on the stuff
+component.prototype.update = function () {
+    ctx = gameArea.context;
+    ctx.fillStyle = this.color;
+    if (this.x > gameArea.canvas.width - gamePiece.width) {
+        this.x = gameArea.canvas.width - gamePiece.width;
     }
-    //define new position
-    this.newPos = function () {
-        this.x += this.speedX;
-        this.y += this.speedY;
+    if (this.x < 0) {
+        this.x = 0;
     }
+    if (this.y > gameArea.canvas.height - gamePiece.height) {
+        this.y = gameArea.canvas.height - gamePiece.height;
+    }
+    if (this.y < 0) {
+        this.y = 0;
+    }
+    //This add shadow to every other component
+    ctx.shadowColor = '#333';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+}
+//define new position
+component.prototype.newPos = function () {
+    this.x += this.speedX;
+    this.y += this.speedY;
 }
 
 //Use to generate the pointer objects. Which gives poins in the game
@@ -112,21 +114,23 @@ var points = function (radius, color, gradColor, x, y, speedX, speedY, isPowerUp
     } else {
         this.speedY = speedY;
     }
-    this.update = function () {
-        ctx = gameArea.context;
-        ctx.beginPath();
-        var grd = ctx.createRadialGradient(this.x, this.y, 6, this.x, this.y, this.radius);
-        grd.addColorStop(0, this.color);
-        grd.addColorStop(1, this.gradColor);
-        ctx.fillStyle = grd;
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-        ctx.fill();
-        ctx.drawImage(this.image, (this.x + this.radius * Math.sin(225 * (2 * Math.PI / 360))), (this.y + this.radius * Math.sin(225 * (2 * Math.PI / 360))), Math.sqrt(Math.pow((2 * this.radius), 2) / 2), Math.sqrt(Math.pow((2 * this.radius), 2) / 2));
-    }
-    this.newPos = function () {
-        this.x += this.speedX;
-        this.y += this.speedY;
-    }
+};
+
+points.prototype.update = function () {
+    ctx = gameArea.context;
+    ctx.beginPath();
+    var grd = ctx.createRadialGradient(this.x, this.y, 6, this.x, this.y, this.radius);
+    grd.addColorStop(0, this.color);
+    grd.addColorStop(1, this.gradColor);
+    ctx.fillStyle = grd;
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+    ctx.fill();
+    ctx.drawImage(this.image, (this.x + this.radius * Math.sin(225 * (2 * Math.PI / 360))), (this.y + this.radius * Math.sin(225 * (2 * Math.PI / 360))), Math.sqrt(Math.pow((2 * this.radius), 2) / 2), Math.sqrt(Math.pow((2 * this.radius), 2) / 2));
+};
+
+points.prototype.newPos = function () {
+    this.x += this.speedX;
+    this.y += this.speedY;
 };
 
 //Use to generate the obstacles
@@ -147,15 +151,16 @@ var obstacles = function (width, height, radius, color, x, y, speedX, speedY) {
     } else {
         this.speedY = speedY;
     }
-    this.update = function () {
-        ctx = gameArea.context;
-        this.image.src = addVariations(this.speedX);
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-    }
-    this.newPos = function () {
-        this.x += this.speedX;
-        this.y += this.speedY;
-    }
+};
+
+obstacles.prototype.update = function () {
+    ctx = gameArea.context;
+    this.image.src = addVariations(this.speedX);
+    ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+};
+obstacles.prototype.newPos = function () {
+    this.x += this.speedX;
+    this.y += this.speedY;
 };
 
 var addVariations = function (value) {
